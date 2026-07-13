@@ -1,19 +1,73 @@
 # TravelGPT — TravelPlanner Pro
 
-> An AI-powered travel planning assistant built with **Flask** + **IBM Watsonx.ai**, fully deployable on **Vercel**.
+> AI-powered travel planning · Flask + IBM Watsonx.ai · Deploy on **Render** or **Vercel**
 
 ---
 
-## ✨ Features
+## 🚀 Deploy on Render (Recommended)
 
-| Feature | Details |
-|---------|---------|
-| 🤖 AI Travel Plans | IBM Watsonx.ai (Granite-13B) generates full itineraries |
-| 🔐 Authentication | Register/login with hashed passwords stored in `/tmp` |
-| 📄 PDF Export | Download your travel plan as a styled PDF |
-| 🚀 Vercel Ready | Serverless deployment via `@vercel/python` |
-| 🎨 Responsive UI | Clean, mobile-friendly design |
-| 💡 Demo Mode | Works without API keys (sample plan shown) |
+### Step 1 — Push to GitHub
+```bash
+git init
+git add .
+git commit -m "TravelGPT"
+# Create a repo on github.com, then:
+git remote add origin https://github.com/YOUR_USER/travelgpt.git
+git push -u origin main
+```
+
+### Step 2 — Create Web Service on Render
+1. Go to [render.com](https://render.com) → **New** → **Web Service**
+2. Connect your GitHub repo
+3. Render auto-detects `render.yaml` — settings are pre-filled:
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn wsgi:app --workers 2 --timeout 120 --bind 0.0.0.0:$PORT`
+   - **Python version:** 3.11.9
+
+### Step 3 — Set Environment Variables
+In the Render dashboard → **Environment**:
+
+| Key | Value |
+|-----|-------|
+| `IBM_API_KEY` | Your IBM Cloud API key |
+| `IBM_PROJECT_ID` | Your Watsonx.ai project ID |
+| `IBM_REGION` | `us-south` *(or your region)* |
+| `SECRET_KEY` | Any long random string |
+
+> `RENDER=true` is set automatically by `render.yaml` — enables ProxyFix.
+
+### Step 4 — Deploy
+Click **Deploy** and wait ~2 minutes. Your app will be live at `https://travelgpt.onrender.com`.
+
+---
+
+## 🌐 Deploy on Vercel
+
+1. Push to GitHub
+2. Import at [vercel.com](https://vercel.com/new)
+3. Add the same 4 env vars in Vercel Dashboard → Settings → Environment Variables
+4. Deploy — `vercel.json` handles all routing automatically
+
+---
+
+## 🛠️ Local Development
+
+```bash
+# 1. Create virtual environment
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Set credentials
+cp .env.example .env
+# Edit .env with your IBM_API_KEY and IBM_PROJECT_ID
+
+# 4. Run
+python run.py
+# Open http://localhost:5000
+```
 
 ---
 
@@ -21,105 +75,48 @@
 
 ```
 travelgpt/
+├── wsgi.py               ← Gunicorn / Render entry point
+├── run.py                ← Local dev runner
+├── render.yaml           ← Render deployment config
+├── vercel.json           ← Vercel deployment config
+├── requirements.txt      ← Python dependencies
+├── .env.example          ← Environment variables template
 ├── api/
-│   ├── index.py          # Main Flask app (Vercel entry point)
-│   ├── auth.py           # User registration & login
-│   ├── watsonx_client.py # IBM Watsonx.ai API integration
-│   └── pdf_generator.py  # fpdf2-based PDF generation
-├── templates/
-│   ├── base.html         # Base layout
-│   ├── login.html        # Login page
-│   ├── register.html     # Register page
-│   ├── index.html        # Trip planner form
-│   └── result.html       # Generated travel plan
-├── static/
-│   ├── css/main.css      # Stylesheet
-│   └── js/main.js        # Client-side JS
-├── vercel.json           # Vercel deployment config
-├── requirements.txt      # Python dependencies
-└── .env.example          # Environment variables template
+│   ├── __init__.py       ← Makes api/ a Python package
+│   ├── index.py          ← Flask app + all routes
+│   ├── auth.py           ← Register / login
+│   ├── watsonx_client.py ← IBM Watsonx.ai REST API
+│   └── pdf_generator.py  ← PDF export (fpdf2)
+├── templates/            ← Jinja2 HTML templates
+│   ├── base.html
+│   ├── login.html
+│   ├── register.html
+│   ├── index.html        ← Trip planner form
+│   ├── result.html       ← Generated plan view
+│   └── chat.html         ← TravelGPT chatbot page
+└── static/
+    ├── css/main.css
+    └── js/main.js
 ```
-
----
-
-## 🚀 Deploy to Vercel
-
-### 1. Clone & push to GitHub
-
-```bash
-git init && git add . && git commit -m "TravelGPT initial commit"
-# Push to GitHub, then import in vercel.com
-```
-
-### 2. Import in Vercel
-
-1. Go to [vercel.com](https://vercel.com) → **New Project** → import your GitHub repo
-2. Vercel auto-detects `vercel.json` — no extra config needed
-
-### 3. Set Environment Variables in Vercel Dashboard
-
-| Variable | Value |
-|----------|-------|
-| `IBM_API_KEY` | Your IBM Cloud API key |
-| `IBM_PROJECT_ID` | Your Watsonx project ID |
-| `IBM_REGION` | `us-south` (or your region) |
-| `SECRET_KEY` | A long random secret string |
-
----
-
-## 🛠️ Local Development
-
-```bash
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy and fill environment variables
-cp .env.example .env
-
-# Run locally (from repo root)
-cd api && flask run
-# or
-python -c "from index import app; app.run(debug=True)"
-```
-
-Open [http://localhost:5000](http://localhost:5000)
 
 ---
 
 ## 🔑 IBM Watsonx.ai Setup
 
-1. Create an [IBM Cloud account](https://cloud.ibm.com)
+1. Create an [IBM Cloud account](https://cloud.ibm.com/registration)
 2. Provision **Watson Machine Learning** service
-3. Create a **Watsonx.ai project** and copy the Project ID
-4. Generate an **IBM Cloud API key**
-5. Set `IBM_API_KEY` and `IBM_PROJECT_ID` in your `.env` / Vercel environment
+3. Open [watsonx.ai](https://dataplatform.cloud.ibm.com/wx/home) → create a project → copy the **Project ID**
+4. IBM Cloud → Manage → [API Keys](https://cloud.ibm.com/iam/apikeys) → create key
+5. Set `IBM_API_KEY` and `IBM_PROJECT_ID`
 
-> **Note:** Without credentials, the app runs in **Demo Mode** with a sample travel plan — perfect for testing the UI.
+> **Without credentials** the app runs in **Demo Mode** — a full sample plan is shown so the UI works without an IBM account.
 
 ---
 
 ## 🎯 Demo Question
 
 > Plan a 4-day family trip from Chennai to Munnar for 4 people with a budget of ₹40,000.
-> We prefer train travel, a standard hotel, and enjoy nature, sightseeing, and local food.
+> Train travel, standard hotel, interested in nature, sightseeing, and local food.
 
-Click **"Fill Demo"** on the planner page to auto-fill this scenario.
-
----
-
-## 📋 Requirements
-
-- Python 3.11+
-- See [`requirements.txt`](requirements.txt) for all packages
-
----
-
-## 📄 License
-
-MIT — free to use, modify, and deploy.
-# TravelGPT-AI
-# TravelGPT-AI
+Click **✨ Fill Demo** on the planner page to auto-fill this.
+# TravelGPT-pro
