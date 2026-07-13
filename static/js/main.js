@@ -2,30 +2,30 @@
 (function () {
   "use strict";
 
-  /* ── Loading overlay ─────────────────────────────────────── */
-  const form = document.getElementById("plannerForm");
-  if (form) {
-    // Inject overlay
+  /* ── Loading overlay (planner page only) ─────────────────── */
+  const plannerForm = document.getElementById("plannerForm");
+  if (plannerForm) {
     const overlay = document.createElement("div");
     overlay.id = "loadingOverlay";
     overlay.innerHTML = `
       <div class="spinner-ring"></div>
       <div class="loading-title">Crafting your travel plan…</div>
       <div class="loading-steps">
-        <div class="loading-step done" id="ls1">✓ &nbsp;Analysing destination</div>
-        <div class="loading-step active" id="ls2">✦ &nbsp;Generating itinerary with Watsonx.ai</div>
-        <div class="loading-step" id="ls3">○ &nbsp;Building budget breakdown</div>
-        <div class="loading-step" id="ls4">○ &nbsp;Finalising recommendations</div>
+        <div class="loading-step done"   id="ls1">✓  Analysing destination</div>
+        <div class="loading-step active" id="ls2">✦  Generating itinerary with Watsonx.ai</div>
+        <div class="loading-step"        id="ls3">○  Building budget breakdown</div>
+        <div class="loading-step"        id="ls4">○  Finalising recommendations</div>
       </div>
     `;
     document.body.appendChild(overlay);
 
-    // Cycle loading steps for UX feel
-    const steps = [overlay.querySelector('#ls2'), overlay.querySelector('#ls3'), overlay.querySelector('#ls4')];
-    let si = 0;
-    let stepTimer;
+    // Always hide overlay on page load (handles browser back-button cache)
+    overlay.classList.remove("show");
 
-    form.addEventListener("submit", function () {
+    const steps = [overlay.querySelector("#ls2"), overlay.querySelector("#ls3"), overlay.querySelector("#ls4")];
+    let si = 0;
+
+    plannerForm.addEventListener("submit", function () {
       const btn = document.getElementById("generateBtn");
       if (btn) {
         btn.querySelector(".btn-text").style.display    = "none";
@@ -33,9 +33,7 @@
         btn.disabled = true;
       }
       overlay.classList.add("show");
-
-      // Animate loading steps
-      stepTimer = setInterval(function () {
+      const timer = setInterval(function () {
         if (si < steps.length) {
           steps[si].classList.remove("active");
           steps[si].classList.add("done");
@@ -46,9 +44,19 @@
             steps[si].textContent = "✦  " + steps[si].textContent.replace(/^○\s+/, "");
           }
         } else {
-          clearInterval(stepTimer);
+          clearInterval(timer);
         }
       }, 4000);
+    });
+
+    // Hide overlay when navigating back to the page
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted) {
+        overlay.classList.remove("show");
+        if (document.getElementById("generateBtn")) {
+          document.getElementById("generateBtn").disabled = false;
+        }
+      }
     });
   }
 
@@ -66,63 +74,52 @@
   const depInput = document.getElementById("departure_date");
   const retInput = document.getElementById("return_date");
   if (depInput) {
-    const today = new Date().toISOString().split("T")[0];
-    depInput.setAttribute("min", today);
+    depInput.setAttribute("min", new Date().toISOString().split("T")[0]);
     depInput.addEventListener("change", function () {
-      if (retInput) retInput.setAttribute("min", depInput.value);
-      if (retInput && retInput.value && retInput.value < depInput.value) {
-        retInput.value = "";
+      if (retInput) {
+        retInput.setAttribute("min", depInput.value);
+        if (retInput.value && retInput.value < depInput.value) retInput.value = "";
       }
     });
   }
 
-  /* ── Hero parallax on planner page ──────────────────────── */
+  /* ── Hero parallax ───────────────────────────────────────── */
   const hero = document.querySelector(".planner-hero");
   if (hero) {
     window.addEventListener("scroll", function () {
-      const y = window.scrollY;
-      hero.style.backgroundPositionY = Math.round(y * 0.3) + "px";
+      hero.style.backgroundPositionY = Math.round(window.scrollY * 0.3) + "px";
     }, { passive: true });
   }
 
-  /* ── Subtle hover lift on form sections ─────────────────── */
+  /* ── Form section hover lift ─────────────────────────────── */
   document.querySelectorAll(".form-section").forEach(function (s) {
-    s.addEventListener("mouseenter", function () {
-      s.style.transform = "translateY(-2px)";
-    });
-    s.addEventListener("mouseleave", function () {
-      s.style.transform = "";
-    });
+    s.addEventListener("mouseenter", function () { s.style.transform = "translateY(-2px)"; });
+    s.addEventListener("mouseleave", function () { s.style.transform = ""; });
   });
 
-  /* ── Star field canvas behind hero ──────────────────────── */
-  const heroEl = document.querySelector(".planner-hero, .result-hero");
+  /* ── Star field on hero (non-blocking RAF, stops when off-screen) ── */
+  var heroEl = document.querySelector(".planner-hero, .result-hero");
   if (heroEl) {
-    const canvas = document.createElement("canvas");
-    canvas.style.cssText = "position:absolute;inset:0;pointer-events:none;opacity:.4;z-index:0";
+    var canvas = document.createElement("canvas");
+    canvas.style.cssText = "position:absolute;inset:0;pointer-events:none;opacity:.35;z-index:0;";
     heroEl.appendChild(canvas);
-    const ctx = canvas.getContext("2d");
-    let stars = [];
+    var ctx = canvas.getContext("2d");
+    var stars = [], rafId = null, active = true;
 
-    function resize() {
+    function resizeCanvas() {
       canvas.width  = heroEl.offsetWidth;
       canvas.height = heroEl.offsetHeight;
     }
-
     function initStars() {
       stars = [];
-      for (let i = 0; i < 80; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          r: Math.random() * 1.5 + 0.3,
-          o: Math.random() * 0.7 + 0.3,
-          speed: Math.random() * 0.3 + 0.1,
-        });
+      for (var i = 0; i < 60; i++) {
+        stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                     r: Math.random() * 1.2 + 0.3, o: Math.random() * 0.6 + 0.2,
+                     speed: Math.random() * 0.25 + 0.08 });
       }
     }
-
-    function draw() {
+    function drawStars() {
+      if (!active) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stars.forEach(function (s) {
         ctx.beginPath();
@@ -132,166 +129,150 @@
         s.y -= s.speed;
         if (s.y < -2) { s.y = canvas.height + 2; s.x = Math.random() * canvas.width; }
       });
-      requestAnimationFrame(draw);
+      rafId = requestAnimationFrame(drawStars);
     }
+    // Stop animation when page is hidden (saves CPU, avoids blocking)
+    document.addEventListener("visibilitychange", function () {
+      active = !document.hidden;
+      if (active && !rafId) drawStars();
+    });
+    window.addEventListener("pagehide", function () { active = false; });
 
-    resize();
-    initStars();
-    draw();
-    window.addEventListener("resize", function () { resize(); initStars(); }, { passive: true });
+    resizeCanvas(); initStars(); drawStars();
+    window.addEventListener("resize", function () { resizeCanvas(); initStars(); }, { passive: true });
   }
 
 })();
 
-/* ══════════════════════════════════════════════════════════════
-   AI CHAT WIDGET
-══════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════
+   AI CHAT WIDGET (floating bubble on all pages)
+═══════════════════════════════════════════════════════════ */
 (function () {
   "use strict";
 
-  const toggle    = document.getElementById("chatToggle");
-  const panel     = document.getElementById("chatPanel");
-  const closeBtn  = document.getElementById("chatClose");
-  const form      = document.getElementById("chatForm");
-  const input     = document.getElementById("chatInput");
-  const sendBtn   = document.getElementById("chatSend");
-  const messages  = document.getElementById("chatMessages");
-  const statusEl  = document.getElementById("chatStatus");
+  var toggle   = document.getElementById("chatToggle");
+  var panel    = document.getElementById("chatPanel");
+  var closeBtn = document.getElementById("chatClose");
+  var form     = document.getElementById("chatForm");
+  var input    = document.getElementById("chatInput");
+  var sendBtn  = document.getElementById("chatSend");
+  var messages = document.getElementById("chatMessages");
+  var statusEl = document.getElementById("chatStatus");
 
   if (!toggle || !panel) return;
 
-  let isOpen    = false;
-  let isBusy    = false;
-  let history   = [];   // [{role, content}, ...]
+  var isOpen = false, isBusy = false, history = [];
 
-  /* ── Open / close ─────────────────────────────────────── */
   function openChat() {
     isOpen = true;
     panel.classList.add("visible");
     panel.setAttribute("aria-hidden", "false");
     toggle.classList.add("open");
-    toggle.setAttribute("aria-label", "Close travel assistant");
     document.getElementById("chatToggleIcon").textContent = "✕";
     input.focus();
-    scrollToBottom();
+    scrollBottom();
   }
-
   function closeChat() {
     isOpen = false;
     panel.classList.remove("visible");
     panel.setAttribute("aria-hidden", "true");
     toggle.classList.remove("open");
-    toggle.setAttribute("aria-label", "Open travel assistant");
     document.getElementById("chatToggleIcon").textContent = "✈️";
-    document.getElementById("chatToggleTxt").style.display = "";
+    var txt = document.getElementById("chatToggleTxt");
+    if (txt) txt.style.display = "";
   }
 
-  toggle.addEventListener("click", function () {
-    isOpen ? closeChat() : openChat();
-  });
-  closeBtn.addEventListener("click", closeChat);
+  toggle.addEventListener("click", function () { isOpen ? closeChat() : openChat(); });
+  if (closeBtn) closeBtn.addEventListener("click", closeChat);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && isOpen) closeChat(); });
 
-  /* ── Quick suggestion chips ───────────────────────────── */
+  /* Quick chips */
   document.querySelectorAll(".chip-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
-      const q = btn.getAttribute("data-q");
-      if (q) sendMessage(q);
-      // Hide suggestions after first use
-      const sugg = document.getElementById("chatSuggestions");
-      if (sugg) sugg.style.display = "none";
+      var q = btn.getAttribute("data-q");
+      if (q && !isBusy) {
+        sendMsg(q);
+        var sugg = document.getElementById("chatSuggestions");
+        if (sugg) sugg.style.display = "none";
+      }
     });
   });
 
-  /* ── Form submit ──────────────────────────────────────── */
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text || isBusy) return;
-    input.value = "";
-    // Hide suggestions once user types
-    const sugg = document.getElementById("chatSuggestions");
-    if (sugg) sugg.style.display = "none";
-    sendMessage(text);
-  });
+  /* Form submit */
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var text = input.value.trim();
+      if (!text || isBusy) return;
+      input.value = "";
+      var sugg = document.getElementById("chatSuggestions");
+      if (sugg) sugg.style.display = "none";
+      sendMsg(text);
+    });
+  }
 
-  /* ── Core send function ───────────────────────────────── */
-  function sendMessage(text) {
+  function sendMsg(text) {
     if (isBusy) return;
-    appendMessage("user", text);
+    appendBubble("user", text);
     history.push({ role: "user", content: text });
-
     isBusy = true;
     sendBtn.disabled = true;
     input.disabled   = true;
-    statusEl.textContent = "Thinking…";
-
-    const typingEl = appendTyping();
-    scrollToBottom();
+    if (statusEl) statusEl.textContent = "Thinking…";
+    var typing = appendTyping();
+    scrollBottom();
 
     fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text, history: history.slice(-6) }),
     })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        typingEl.remove();
-        const reply = data.reply || data.error || "Sorry, something went wrong.";
-        appendMessage("bot", reply);
-        history.push({ role: "assistant", content: reply });
-        statusEl.textContent = "Powered by IBM Watsonx.ai";
-      })
-      .catch(function () {
-        typingEl.remove();
-        appendMessage("bot", "⚠️ Could not reach the server. Please check your connection.");
-        statusEl.textContent = "Powered by IBM Watsonx.ai";
-      })
-      .finally(function () {
-        isBusy           = false;
-        sendBtn.disabled = false;
-        input.disabled   = false;
-        input.focus();
-        scrollToBottom();
-      });
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      typing.remove();
+      var reply = data.reply || data.error || "Sorry, something went wrong.";
+      appendBubble("bot", reply);
+      history.push({ role: "assistant", content: reply });
+      if (statusEl) statusEl.textContent = "Powered by IBM Watsonx.ai";
+    })
+    .catch(function () {
+      typing.remove();
+      appendBubble("bot", "⚠️ Could not reach the server. Please check your connection.");
+      if (statusEl) statusEl.textContent = "Powered by IBM Watsonx.ai";
+    })
+    .finally(function () {
+      isBusy = false;
+      sendBtn.disabled = false;
+      input.disabled   = false;
+      input.focus();
+      scrollBottom();
+    });
   }
 
-  /* ── DOM helpers ──────────────────────────────────────── */
-  function appendMessage(role, text) {
-    const wrap   = document.createElement("div");
+  function appendBubble(role, text) {
+    var wrap = document.createElement("div");
     wrap.className = "chat-msg " + role;
-    const bubble = document.createElement("div");
+    var bubble = document.createElement("div");
     bubble.className = "msg-bubble";
-    // Render **bold** and line-breaks
     bubble.innerHTML = text
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\n/g, "<br/>");
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+      .replace(/\n/g,"<br/>");
     wrap.appendChild(bubble);
     messages.appendChild(wrap);
-    scrollToBottom();
+    scrollBottom();
     return wrap;
   }
-
   function appendTyping() {
-    const wrap   = document.createElement("div");
+    var wrap = document.createElement("div");
     wrap.className = "chat-msg bot typing";
-    const bubble = document.createElement("div");
-    bubble.className = "msg-bubble";
-    bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
-    wrap.appendChild(bubble);
+    wrap.innerHTML = '<div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
     messages.appendChild(wrap);
     return wrap;
   }
-
-  function scrollToBottom() {
-    setTimeout(function () {
-      messages.scrollTop = messages.scrollHeight;
-    }, 50);
+  function scrollBottom() {
+    setTimeout(function () { messages.scrollTop = messages.scrollHeight; }, 50);
   }
-
-  /* ── Keyboard shortcut: Escape closes chat ────────────── */
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && isOpen) closeChat();
-  });
 
 })();

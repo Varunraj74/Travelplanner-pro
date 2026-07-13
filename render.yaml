@@ -3,19 +3,19 @@ services:
     name: travelgpt
     runtime: python
     region: singapore           # change to: oregon, frankfurt, ohio, virginia
-    plan: free                  # free | starter | standard
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app --workers 2 --timeout 120 --bind 0.0.0.0:$PORT
+    startCommand: gunicorn run:app --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.9"
       - key: RENDER
         value: "true"
-      - key: SECRET_KEY
-        generateValue: true     # Render auto-generates a secure random value
       - key: IBM_API_KEY
-        sync: false             # set manually in Render dashboard
+        sync: false
       - key: IBM_PROJECT_ID
         sync: false
       - key: IBM_REGION
         value: "us-south"
+      - key: SECRET_KEY
+        generateValue: true
