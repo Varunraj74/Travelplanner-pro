@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}AI Travel Chat — TravelPlanner Pro{% endblock %}
+
+{% block content %}
+<div class="chatpage-layout">
+
+  <!-- Left sidebar -->
+  <aside class="chatpage-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-avatar">✈️</div>
+      <div>
+        <div class="sidebar-title">TravelGPT</div>
+        <div class="sidebar-sub">AI Travel Assistant</div>
+      </div>
+    </div>
+
+    <div class="sidebar-status">
+      <span class="status-dot" id="sidebarDot"></span>
+      <span id="sidebarStatus">IBM Watsonx.ai</span>
+    </div>
+
+    <div class="sidebar-section-label">Quick Topics</div>
+    <div class="sidebar-topics">
+      <button class="topic-btn" data-q="What are the best hill stations to visit in India?">🏔️ Hill Stations</button>
+      <button class="topic-btn" data-q="Plan a 3-day budget trip to Goa for 2 people">🏖️ Goa Getaway</button>
+      <button class="topic-btn" data-q="What is the best time to visit Rajasthan?">🏜️ Rajasthan Season</button>
+      <button class="topic-btn" data-q="Top things to do in Kerala backwaters">🌊 Kerala Backwaters</button>
+      <button class="topic-btn" data-q="Budget travel tips for solo travellers in India">🎒 Solo Travel Tips</button>
+      <button class="topic-btn" data-q="What documents do I need for international travel from India?">📄 Visa & Docs</button>
+      <button class="topic-btn" data-q="Best street food cities in India">🍛 Street Food Cities</button>
+      <button class="topic-btn" data-q="Honeymoon destinations in India under ₹50,000">💑 Honeymoon Ideas</button>
+      <button class="topic-btn" data-q="Safest destinations for women solo travel in India">👩 Women Solo Travel</button>
+      <button class="topic-btn" data-q="Best international destinations from India under ₹1 lakh budget">🌍 International Trips</button>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:1.5rem">Actions</div>
+    <a href="/planner" class="sidebar-action-btn">🗺️ Create Full Itinerary</a>
+    <button class="sidebar-action-btn outline" id="clearChatBtn">🗑️ Clear Chat</button>
+  </aside>
+
+  <!-- Main chat area -->
+  <div class="chatpage-main">
+
+    <!-- Chat header -->
+    <div class="chatpage-header">
+      <div class="chatpage-header-left">
+        <div class="chatpage-header-icon">🤖</div>
+        <div>
+          <h1 class="chatpage-title">TravelGPT Chat</h1>
+          <p class="chatpage-subtitle" id="pageStatus">Ask me anything about travel — destinations, budgets, food, visas, packing &amp; more</p>
+        </div>
+      </div>
+      <div class="chatpage-header-right">
+        <span class="model-badge" id="modelBadge">IBM Watsonx.ai</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chatpage-messages" id="chatPageMessages">
+      <!-- Welcome message -->
+      <div class="cpm bot">
+        <div class="cpm-avatar">✈️</div>
+        <div class="cpm-body">
+          <div class="cpm-bubble">
+            <p>👋 Hi <strong>{{ username }}</strong>! I'm <strong>TravelGPT</strong>, your personal AI travel companion powered by <strong>IBM Watsonx.ai</strong>.</p>
+            <p style="margin-top:.5rem">I can help you with:</p>
+            <ul style="margin:.4rem 0 0 1rem;line-height:1.8">
+              <li>🗺️ Destination recommendations & comparisons</li>
+              <li>💰 Budget planning & cost estimates</li>
+              <li>🌤️ Best time to visit any place</li>
+              <li>🎒 Packing lists tailored to your trip</li>
+              <li>🍛 Local food, culture & etiquette</li>
+              <li>📄 Visa requirements & travel documents</li>
+              <li>🏨 Hotel & accommodation suggestions</li>
+            </ul>
+            <p style="margin-top:.6rem">Try the quick topics on the left, or just type your question below!</p>
+          </div>
+          <div class="cpm-time">Just now</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typing area -->
+    <div class="chatpage-input-area">
+      <div class="chatpage-suggestions" id="pageSuggestions">
+        <button class="page-chip" data-q="Best time to visit Munnar?">🌿 Munnar season</button>
+        <button class="page-chip" data-q="Budget trip to Shimla for 4 people">❄️ Shimla budget</button>
+        <button class="page-chip" data-q="Top 5 beaches in India">🏖️ Top beaches</button>
+        <button class="page-chip" data-q="Packing list for a Himalaya trek">🥾 Trek packing</button>
+        <button class="page-chip" data-q="Best international trips under ₹80,000">✈️ International</button>
+      </div>
+      <form class="chatpage-form" id="chatPageForm" autocomplete="off">
+        <div class="chatpage-input-wrap">
+          <textarea id="chatPageInput"
+                    placeholder="Ask anything about travel destinations, budgets, visas, food, packing…"
+                    rows="1" maxlength="1000" autocomplete="off"></textarea>
+          <button type="submit" id="chatPageSend" aria-label="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="chatpage-input-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line · Powered by IBM Watsonx.ai</div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  const msgsEl   = document.getElementById("chatPageMessages");
+  const form     = document.getElementById("chatPageForm");
+  const inputEl  = document.getElementById("chatPageInput");
+  const sendBtn  = document.getElementById("chatPageSend");
+  const statusEl = document.getElementById("pageStatus");
+  const dotEl    = document.getElementById("sidebarDot");
+  const clearBtn = document.getElementById("clearChatBtn");
+  const modelBadge = document.getElementById("modelBadge");
+
+  let history = [];
+  let isBusy  = false;
+
+  /* ── Auto-resize textarea ──────────────────────────── */
+  inputEl.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 140) + "px";
+  });
+
+  /* ── Enter to send (Shift+Enter = newline) ─────────── */
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!isBusy) form.dispatchEvent(new Event("submit"));
+    }
+  });
+
+  /* ── Quick topic buttons (sidebar) ─────────────────── */
+  document.querySelectorAll(".topic-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const q = btn.getAttribute("data-q");
+      if (q && !isBusy) { inputEl.value = q; sendMessage(q); inputEl.value = ""; }
+    });
+  });
+
+  /* ── Suggestion chips ───────────────────────────────── */
+  document.querySelectorAll(".page-chip").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const q = btn.getAttribute("data-q");
+      if (q && !isBusy) {
+        sendMessage(q);
+        document.getElementById("pageSuggestions").style.display = "none";
+      }
+    });
+  });
+
+  /* ── Clear chat ─────────────────────────────────────── */
+  clearBtn.addEventListener("click", function () {
+    history = [];
+    // Keep only the first welcome message
+    const msgs = msgsEl.querySelectorAll(".cpm");
+    msgs.forEach(function (m, i) { if (i > 0) m.remove(); });
+    document.getElementById("pageSuggestions").style.display = "";
+  });
+
+  /* ── Form submit ────────────────────────────────────── */
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const text = inputEl.value.trim();
+    if (!text || isBusy) return;
+    inputEl.value = "";
+    inputEl.style.height = "auto";
+    document.getElementById("pageSuggestions").style.display = "none";
+    sendMessage(text);
+  });
+
+  /* ── Core send ──────────────────────────────────────── */
+  function sendMessage(text) {
+    if (isBusy) return;
+    appendMsg("user", text);
+    history.push({ role: "user", content: text });
+
+    isBusy = true;
+    sendBtn.disabled = true;
+    inputEl.disabled = true;
+    dotEl.className  = "status-dot thinking";
+    statusEl.textContent = "TravelGPT is thinking…";
+    modelBadge.textContent = "Generating…";
+
+    const typingEl = appendTyping();
+    scrollBottom();
+
+    fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, history: history.slice(-8) }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        typingEl.remove();
+        const reply = data.reply || data.error || "Sorry, something went wrong.";
+        appendMsg("bot", reply);
+        history.push({ role: "assistant", content: reply });
+        dotEl.className = "status-dot online";
+        statusEl.textContent = "Ask me anything about travel";
+        modelBadge.textContent = "IBM Watsonx.ai";
+      })
+      .catch(function () {
+        typingEl.remove();
+        appendMsg("bot", "⚠️ Could not reach the server. Please check your connection and try again.");
+        dotEl.className = "status-dot error";
+        statusEl.textContent = "Connection error";
+        modelBadge.textContent = "IBM Watsonx.ai";
+      })
+      .finally(function () {
+        isBusy = false;
+        sendBtn.disabled = false;
+        inputEl.disabled = false;
+        inputEl.focus();
+        scrollBottom();
+      });
+  }
+
+  /* ── DOM helpers ────────────────────────────────────── */
+  function appendMsg(role, text) {
+    const wrap = document.createElement("div");
+    wrap.className = "cpm " + role;
+    const avatarEl = document.createElement("div");
+    avatarEl.className = "cpm-avatar";
+    avatarEl.textContent = role === "bot" ? "✈️" : "👤";
+    const body = document.createElement("div");
+    body.className = "cpm-body";
+    const bubble = document.createElement("div");
+    bubble.className = "cpm-bubble";
+    bubble.innerHTML = text
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/^• /gm, "• ")
+      .replace(/\n/g, "<br/>");
+    const timeEl = document.createElement("div");
+    timeEl.className = "cpm-time";
+    timeEl.textContent = new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+    body.appendChild(bubble);
+    body.appendChild(timeEl);
+    if (role === "bot") { wrap.appendChild(avatarEl); wrap.appendChild(body); }
+    else                { wrap.appendChild(body); wrap.appendChild(avatarEl); }
+    msgsEl.appendChild(wrap);
+    scrollBottom();
+    return wrap;
+  }
+
+  function appendTyping() {
+    const wrap = document.createElement("div");
+    wrap.className = "cpm bot typing";
+    wrap.innerHTML = '<div class="cpm-avatar">✈️</div><div class="cpm-body"><div class="cpm-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>';
+    msgsEl.appendChild(wrap);
+    return wrap;
+  }
+
+  function scrollBottom() {
+    setTimeout(function () { msgsEl.scrollTop = msgsEl.scrollHeight; }, 60);
+  }
+
+  /* Focus input on load */
+  inputEl.focus();
+  dotEl.className = "status-dot online";
+})();
+</script>
+{% endblock %}

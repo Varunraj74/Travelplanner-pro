@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Sign In — TravelPlanner Pro{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+
+  <!-- Left: Visual panel -->
+  <div class="auth-visual">
+    <div class="auth-visual-content">
+      <span class="auth-visual-icon">✈️</span>
+      <h2>Your next adventure<br>starts here</h2>
+      <p>AI-powered travel planning crafted around your budget, interests, and style.</p>
+      <ul class="auth-visual-features">
+        <li>Personalized day-wise itineraries</li>
+        <li>Budget breakdown &amp; cost estimates</li>
+        <li>Hotel, food &amp; transport suggestions</li>
+        <li>Download as a professional PDF</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right: Form panel -->
+  <div class="auth-form-panel">
+    <div class="auth-form-header">
+      <h1>Welcome back 👋</h1>
+      <p>Sign in to your account to continue planning</p>
+    </div>
+
+    <form method="POST" action="/login" class="auth-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               placeholder="Enter your username"
+               required autocomplete="username" class="form-input"/>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="Enter your password"
+               required autocomplete="current-password" class="form-input"/>
+      </div>
+      <button type="submit" class="btn-submit">Sign In →</button>
+    </form>
+
+    <div class="auth-switch">
+      Don't have an account? <a href="/register">Create one free</a>
+    </div>
+    <div class="demo-notice">
+      💡 New here? Just register — no email verification needed.
+    </div>
+  </div>
+
+</div>
+{% endblock %}

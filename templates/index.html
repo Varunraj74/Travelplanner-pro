@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Plan Your Trip — TravelPlanner Pro{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="planner-hero">
+  <div class="hero-content">
+    <div class="hero-badge">✦ Powered by IBM Watsonx.ai</div>
+    <h1>Plan Your <span>Perfect Trip</span></h1>
+    <p>Tell us where you want to go — we'll craft a complete, personalised itinerary in seconds.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-val">14</div>
+        <div class="hero-stat-lbl">Plan Sections</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">AI</div>
+        <div class="hero-stat-lbl">Powered</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">PDF</div>
+        <div class="hero-stat-lbl">Export</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val">Free</div>
+        <div class="hero-stat-lbl">To Use</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Form -->
+<div class="planner-container">
+
+  <!-- Steps bar -->
+  <div class="steps-bar">
+    <div class="step-item active">
+      <span class="step-num">1</span>Route
+    </div>
+    <div class="step-item active">
+      <span class="step-num">2</span>People
+    </div>
+    <div class="step-item active">
+      <span class="step-num">3</span>Prefs
+    </div>
+    <div class="step-item active">
+      <span class="step-num">4</span>Interests
+    </div>
+    <div class="step-item active">
+      <span class="step-num">5</span>Generate
+    </div>
+  </div>
+
+  <form method="POST" action="/generate" id="plannerForm" class="planner-form">
+
+    <!-- Section 1: Route -->
+    <div class="form-section">
+      <h2 class="section-title">🗺️ Journey Route</h2>
+      <div class="route-visual">
+        <div class="form-group">
+          <label for="source">From</label>
+          <input type="text" id="source" name="source"
+                 placeholder="e.g. Chennai"
+                 required class="form-input"
+                 value="{{ request.form.get('source','') }}"/>
+        </div>
+        <div class="route-arrow">→</div>
+        <div class="form-group">
+          <label for="destination">To</label>
+          <input type="text" id="destination" name="destination"
+                 placeholder="e.g. Munnar"
+                 required class="form-input"
+                 value="{{ request.form.get('destination','') }}"/>
+        </div>
+      </div>
+      <div class="form-grid-2" style="margin-top:1.1rem">
+        <div class="form-group">
+          <label for="departure_date">Departure Date</label>
+          <input type="date" id="departure_date" name="departure_date"
+                 required class="form-input"
+                 value="{{ request.form.get('departure_date','') }}"/>
+        </div>
+        <div class="form-group">
+          <label for="return_date">Return Date</label>
+          <input type="date" id="return_date" name="return_date"
+                 required class="form-input"
+                 value="{{ request.form.get('return_date','') }}"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Travelers & Budget -->
+    <div class="form-section">
+      <h2 class="section-title">👥 Travelers &amp; Budget</h2>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="travelers">Number of Travelers</label>
+          <input type="number" id="travelers" name="travelers"
+                 min="1" max="20" placeholder="e.g. 4"
+                 required class="form-input"
+                 value="{{ request.form.get('travelers','') }}"/>
+        </div>
+        <div class="form-group">
+          <label for="budget">Total Budget</label>
+          <input type="text" id="budget" name="budget"
+                 placeholder="e.g. ₹40,000"
+                 required class="form-input"
+                 value="{{ request.form.get('budget','') }}"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Preferences -->
+    <div class="form-section">
+      <h2 class="section-title">⚙️ Travel Preferences</h2>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="transport">Preferred Transport</label>
+          <div class="form-select-wrap">
+            <select id="transport" name="transport" class="form-input form-select">
+              <option value="Train">🚂 Train</option>
+              <option value="Flight">✈️ Flight</option>
+              <option value="Bus">🚌 Bus</option>
+              <option value="Car">🚗 Car / Self Drive</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="hotel_pref">Hotel Preference</label>
+          <div class="form-select-wrap">
+            <select id="hotel_pref" name="hotel_pref" class="form-input form-select">
+              <option value="Budget">💰 Budget</option>
+              <option value="Standard" selected>⭐ Standard</option>
+              <option value="Luxury">👑 Luxury</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="special_req">Trip Type</label>
+          <div class="form-select-wrap">
+            <select id="special_req" name="special_req" class="form-input form-select">
+              <option value="Family Trip">👨‍👩‍👧‍👦 Family Trip</option>
+              <option value="Honeymoon">💑 Honeymoon</option>
+              <option value="Solo">🧳 Solo</option>
+              <option value="Friends">👫 Friends</option>
+              <option value="Senior Citizens">🧓 Senior Citizens</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Interests -->
+    <div class="form-section">
+      <h2 class="section-title">🎯 Your Interests</h2>
+      <div class="interest-grid">
+        {% set interest_list = [
+          ("Nature","🌿"), ("Adventure","🧗"), ("Beaches","🏖️"), ("Wildlife","🦁"),
+          ("Shopping","🛍️"), ("Food","🍛"), ("Culture","🎭"), ("Religious","🛕"),
+          ("Historical","🏛️")
+        ] %}
+        {% for interest, icon in interest_list %}
+        <label class="interest-chip">
+          <input type="checkbox" name="interests" value="{{ interest }}"
+            {% if interest in (request.form.getlist('interests') or ['Nature','Food']) %}checked{% endif %}/>
+          <span>{{ icon }} {{ interest }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="form-actions">
+      <button type="submit" class="btn-generate" id="generateBtn">
+        <span class="btn-text">🚀 Generate My Travel Plan</span>
+        <span class="btn-loading" style="display:none;">✦ Generating…</span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Demo bar -->
+  <div class="sample-prompt-bar">
+    <strong>💡 Demo:</strong>&nbsp; Chennai → Munnar · 4 days · 4 people · ₹40,000 · Train · Standard
+    <button onclick="fillDemo()" class="btn-demo">✨ Fill Demo</button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fillDemo() {
+  document.getElementById('source').value       = 'Chennai';
+  document.getElementById('destination').value  = 'Munnar';
+  document.getElementById('travelers').value    = '4';
+  document.getElementById('budget').value       = '₹40,000';
+  document.getElementById('transport').value    = 'Train';
+  document.getElementById('hotel_pref').value   = 'Standard';
+  document.getElementById('special_req').value  = 'Family Trip';
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  const r = new Date(d); r.setDate(r.getDate() + 4);
+  document.getElementById('departure_date').value = d.toISOString().split('T')[0];
+  document.getElementById('return_date').value    = r.toISOString().split('T')[0];
+  document.querySelectorAll('input[name="interests"]').forEach(cb => {
+    cb.checked = ['Nature','Food','Historical','Culture'].includes(cb.value);
+  });
+  // Briefly flash the chips to show selection
+  document.querySelectorAll('.interest-chip span').forEach(s => {
+    s.style.transition = 'all .3s';
+  });
+}
+</script>
+{% endblock %}

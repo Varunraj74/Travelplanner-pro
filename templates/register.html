@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Create Account — TravelPlanner Pro{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+
+  <!-- Left: Visual panel -->
+  <div class="auth-visual">
+    <div class="auth-visual-content">
+      <span class="auth-visual-icon">🌍</span>
+      <h2>Plan smarter,<br>travel better</h2>
+      <p>Join thousands of travellers who use TravelPlanner Pro to craft unforgettable trips.</p>
+      <ul class="auth-visual-features">
+        <li>Free to use — no credit card</li>
+        <li>AI itineraries in under 30 seconds</li>
+        <li>Supports any destination worldwide</li>
+        <li>Export beautiful PDF travel plans</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right: Form panel -->
+  <div class="auth-form-panel">
+    <div class="auth-form-header">
+      <h1>Create account 🚀</h1>
+      <p>Start planning your next adventure today</p>
+    </div>
+
+    <form method="POST" action="/register" class="auth-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               placeholder="Choose a username"
+               required minlength="3" maxlength="30" class="form-input"/>
+      </div>
+      <div class="form-group">
+        <label for="email">Email <span class="optional">(optional)</span></label>
+        <input type="email" id="email" name="email"
+               placeholder="your@email.com" class="form-input"/>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="Minimum 6 characters"
+               required minlength="6" class="form-input"/>
+      </div>
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password"
+               placeholder="Repeat your password"
+               required minlength="6" class="form-input"/>
+      </div>
+      <button type="submit" class="btn-submit">Create Account →</button>
+    </form>
+
+    <div class="auth-switch">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}TravelGPT — TravelPlanner Pro{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/" class="nav-brand" style="text-decoration:none">
+      <span class="brand-icon">✈️</span>
+      <span class="brand-name">TravelPlanner Pro</span>
+      <span class="brand-tag">IBM Watsonx.ai</span>
+    </a>
+    <div class="nav-links">
+      {% if session.username %}
+        <span class="nav-user">👤 {{ session.username }}</span>
+        <a href="/planner" class="nav-link {% if request.path == '/planner' %}nav-active{% endif %}">Planner</a>
+        <a href="/chat"    class="nav-link {% if request.path == '/chat' %}nav-active{% endif %}">💬 Chat</a>
+        <a href="/logout"  class="nav-link btn-outline">Logout</a>
+      {% else %}
+        <a href="/login"    class="nav-link">Login</a>
+        <a href="/register" class="nav-link btn-primary">Get Started</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2025 TravelPlanner Pro &nbsp;·&nbsp; Powered by <strong>IBM Watsonx.ai</strong> &nbsp;·&nbsp; Built with ❤️ for wanderers</p>
+  </footer>
+
+  <!-- ── AI Chat Widget ─────────────────────────────────── -->
+  <div id="chatWidget">
+    <!-- Toggle button -->
+    <button id="chatToggle" aria-label="Open travel assistant">
+      <span id="chatToggleIcon">✈️</span>
+      <span id="chatToggleTxt">Ask AI</span>
+    </button>
+
+    <!-- Chat panel -->
+    <div id="chatPanel" class="chat-panel" aria-hidden="true">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-avatar">✈️</div>
+          <div>
+            <div class="chat-title">TravelPlanner AI</div>
+            <div class="chat-subtitle" id="chatStatus">Powered by IBM Watsonx.ai</div>
+          </div>
+        </div>
+        <button class="chat-close" id="chatClose" aria-label="Close">✕</button>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg bot">
+          <div class="msg-bubble">
+            👋 Hi! I'm your AI travel assistant. Ask me about destinations, budgets, packing, visas, food, or anything travel-related!
+          </div>
+        </div>
+        <!-- Quick suggestions -->
+        <div class="chat-suggestions" id="chatSuggestions">
+          <button class="chip-btn" data-q="Best time to visit Munnar?">🌿 Munnar season?</button>
+          <button class="chip-btn" data-q="Budget tips for India travel">💰 Budget tips</button>
+          <button class="chip-btn" data-q="What to pack for a hill station trip?">🎒 Packing list</button>
+          <button class="chip-btn" data-q="Best food to try in South India">🍛 South India food</button>
+        </div>
+      </div>
+
+      <form class="chat-input-row" id="chatForm" autocomplete="off">
+        <input type="text" id="chatInput" placeholder="Ask anything about travel…" autocomplete="off" maxlength="500"/>
+        <button type="submit" id="chatSend" aria-label="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/main.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

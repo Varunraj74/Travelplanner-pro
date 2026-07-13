@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ details.source }} → {{ details.destination }} — TravelPlanner Pro{% endblock %}
+
+{% block content %}
+
+<!-- Result hero -->
+<div class="result-hero">
+  <div class="result-hero-inner">
+    <div>
+      <div class="result-route">
+        <strong>{{ details.source }}</strong>
+        <span class="arrow-pill">→</span>
+        <strong>{{ details.destination }}</strong>
+      </div>
+      <h1 class="result-title">Your Travel Plan is Ready ✨</h1>
+      <div class="result-tags">
+        <span class="result-tag">{{ details.travelers }} Traveler(s)</span>
+        <span class="result-tag">{{ details.budget }}</span>
+        <span class="result-tag">{{ details.transport }}</span>
+        <span class="result-tag">{{ details.hotel_pref }} Hotel</span>
+        {% if details.interests %}
+          {% for i in details.interests.split(', ') %}
+            <span class="result-tag">{{ i }}</span>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="result-hero-actions">
+      <a href="/download-pdf" class="btn-pdf">⬇️ Download PDF</a>
+      <a href="/planner" class="btn-back">← New Plan</a>
+    </div>
+  </div>
+</div>
+
+<!-- Layout: ToC + Content -->
+<div class="result-layout">
+
+  <!-- Sticky ToC (auto-built by JS) -->
+  <aside class="result-toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list" id="tocList">
+      <!-- populated by JS -->
+    </ul>
+  </aside>
+
+  <!-- Main plan -->
+  <div class="plan-content" id="planContent">
+    {{ plan | safe_markdown }}
+  </div>
+
+</div>
+
+<!-- Bottom actions -->
+<div class="result-actions-bottom">
+  <a href="/download-pdf" class="btn-pdf">⬇️ Download PDF Report</a>
+  <a href="/planner" class="btn-back" style="background:var(--surface);color:var(--text-muted);border:1px solid var(--border);">🗺️ Plan Another Trip</a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Build ToC from plan headings
+(function(){
+  const plan = document.getElementById('planContent');
+  const tocList = document.getElementById('tocList');
+  if (!plan || !tocList) return;
+  const headings = plan.querySelectorAll('.plan-h2');
+  headings.forEach(function(h, i) {
+    const id = 'section-' + i;
+    h.id = id;
+    const li = document.createElement('li');
+    const a  = document.createElement('a');
+    // Strip number prefix like "1. " from text
+    a.textContent = h.textContent.replace(/^\d+[\.\s]+/, '').trim().substring(0, 28);
+    a.href = '#' + id;
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    li.appendChild(a);
+    tocList.appendChild(li);
+  });
+
+  // Highlight active ToC item on scroll
+  const tocLinks = tocList.querySelectorAll('a');
+  window.addEventListener('scroll', function() {
+    let current = '';
+    headings.forEach(function(h) {
+      if (window.scrollY >= h.offsetTop - 120) current = h.id;
+    });
+    tocLinks.forEach(function(a) {
+      a.style.background = a.href.endsWith(current) ? 'rgba(79,70,229,.2)' : '';
+      a.style.color = a.href.endsWith(current) ? '#a5b4fc' : '';
+    });
+  }, { passive: true });
+})();
+</script>
+{% endblock %}
